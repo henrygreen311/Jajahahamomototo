@@ -1,0 +1,26 @@
+name: Monitor
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # starts at the top of every hour
+  workflow_dispatch:        # allows manual trigger from GitHub Actions UI
+
+jobs:
+  run-monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 58     # stops at 58 minutes
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run main.py
+        run: python3 main.py
