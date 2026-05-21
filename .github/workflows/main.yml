@@ -2,13 +2,13 @@ name: Monitor
 
 on:
   schedule:
-    - cron: '0 * * * *'   # starts at the top of every hour
-  workflow_dispatch:        # allows manual trigger from GitHub Actions UI
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   run-monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 58     # stops at 58 minutes
+    timeout-minutes: 58
 
     steps:
       - name: Checkout repository
@@ -23,4 +23,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run main.py
-        run: python3 main.py
+        env:
+          PYTHONUNBUFFERED: "1"
+          PYTHONIOENCODING: "utf-8"
+        run: python3 -u main.py
