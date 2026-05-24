@@ -115,6 +115,7 @@ def retweet(account, tweet_id, user_agent):
         "X-Twitter-Auth-Type":       "OAuth2Session",
         "X-Twitter-Client-Language": "en",
         "X-Twitter-Active-User":     "yes",
+		"X-Client-Transaction-Id":  "jXYRGKk63lXeBAXYDGjdz0JllxiOUL/75BMlSJp9N/tsRFYAEtkI891sx7Cr3Fv+5kaZT4i6qm6vm9wqyOIwvO+aPmB0jg",
         "Origin":                    "https://x.com",
         "Referer":                   "https://x.com/home",
         "Sec-Fetch-Dest":            "empty",

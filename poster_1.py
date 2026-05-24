@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 SUPABASE_URL = "https://gcmoppkkplzztiayvbdk.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjbW9wcGtrcGx6enRpYXl2YmRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTg5MTMsImV4cCI6MjA4NzE5NDkxM30.ZSgnOL471BMBIeDMlOp-RhuXGLk51rqDNektdoYHmC4"
 BEARER       = "AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-GRAPHQL_ID   = "5CdvsV_zjv4L64XFifAglw"
+GRAPHQL_ID   = "H-t2v_HvFR07ZBP9aOeKoA"
 IMAGES_DIR   = "images"
 MAX_WORKERS  = 5
 
@@ -123,6 +123,7 @@ def build_request_headers(account, user_agent, referer="https://x.com/compose/po
         "X-Twitter-Auth-Type":       "OAuth2Session",
         "X-Twitter-Client-Language": "en",
         "X-Twitter-Active-User":     "yes",
+    	"X-Client-Transaction-Id":  "IsQ5HjokzFsTNjSQFDarnZJ13YZl6YDqau05CICTKJieZF0I0bo0nsgM+aFOLL/RrpMp4CfP5jou5W0pBvBlaCoe3xfyIQ",
         "Origin":                    "https://x.com",
         "Referer":                   referer,
         "Sec-Fetch-Dest":            "empty",
