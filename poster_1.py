@@ -19,20 +19,27 @@ MAX_WORKERS  = 5
 
 PROXY_BASE   = "https://poster.qringgreen.workers.dev"
 
+# Files that post with images (multi-image allowed)
 IMAGE_COMMENT_FILES = [
     "comments/tc-comments.json",
     "comments/tg_comments.json",
 ]
 
+# Files that post with exactly 1 image
+SINGLE_IMAGE_COMMENT_FILES = [
+    "comments/shd_comments.json",
+]
+
+# Files that post text only
 TEXT_COMMENT_FILES = [
     "comments/xtl_comments.json",
-    "comments/shd_comments.json",
     "comments/dl_comments.json",
 ]
 
 IMAGE_PREFIX_MAP = {
-    "comments/tc-comments.json": "tweet-chain",
-    "comments/tg_comments.json": "tweet-generator",
+    "comments/tc-comments.json":  "tweet-chain",
+    "comments/tg_comments.json":  "tweet-generator",
+    "comments/shd_comments.json": "shadowban",
 }
 
 SUPABASE_HEADERS = {
@@ -123,7 +130,7 @@ def build_request_headers(account, user_agent, referer="https://x.com/compose/po
         "X-Twitter-Auth-Type":       "OAuth2Session",
         "X-Twitter-Client-Language": "en",
         "X-Twitter-Active-User":     "yes",
-    	"X-Client-Transaction-Id":  "IsQ5HjokzFsTNjSQFDarnZJ13YZl6YDqau05CICTKJieZF0I0bo0nsgM+aFOLL/RrpMp4CfP5jou5W0pBvBlaCoe3xfyIQ",
+        "X-Client-Transaction-Id":   "IsQ5HjokzFsTNjSQFDarnZJ13YZl6YDqau05CICTKJieZF0I0bo0nsgM+aFOLL/RrpMp4CfP5jou5W0pBvBlaCoe3xfyIQ",
         "Origin":                    "https://x.com",
         "Referer":                   referer,
         "Sec-Fetch-Dest":            "empty",
@@ -150,7 +157,7 @@ def build_upload_headers(account, user_agent):
         "Sec-Gpc":             "1" if is_firefox else "0",
     }
 
-# ── DB (stays direct — Supabase is not X) ────────────────────────────────────
+# ── DB ────────────────────────────────────────────────────────────────────────
 
 def get_accounts():
     res = requests.get(
@@ -339,8 +346,14 @@ def upload_images_for_comment(comment_file, account, user_agent, account_name):
     if not images:
         return []
 
-    count     = random.randint(1, min(2, len(images)))
-    selected  = random.sample(images, count)
+    # shd_comments.json: always exactly 1 image
+    # IMAGE_COMMENT_FILES: 1 or 2 images
+    if comment_file in SINGLE_IMAGE_COMMENT_FILES:
+        count = 1
+    else:
+        count = random.randint(1, min(2, len(images)))
+
+    selected  = random.sample(images, min(count, len(images)))
     media_ids = []
     for img in selected:
         media_id = upload_image(img, account, user_agent, account_name)
@@ -358,7 +371,7 @@ def post_reply(account, conversation_id, text, media_ids, user_agent):
         "variables": {
             "tweet_text": text,
             "reply": {
-                "in_reply_to_tweet_id":  conversation_id,
+                "in_reply_to_tweet_id":   conversation_id,
                 "exclude_reply_user_ids": [],
             },
             "media": {
@@ -442,8 +455,19 @@ def process_account(account, conversation_id):
 
     log(account_name, f"Starting | Browser: {browser}")
 
-    use_images   = random.choice([True, False])
-    comment_pool = IMAGE_COMMENT_FILES if use_images else TEXT_COMMENT_FILES
+    # Weighted pool: image (multi), single-image, or text-only
+    pool_choice = random.choices(
+        ["image", "single_image", "text"],
+        weights=[40, 30, 30],
+        k=1,
+    )[0]
+
+    if pool_choice == "image":
+        comment_pool = IMAGE_COMMENT_FILES
+    elif pool_choice == "single_image":
+        comment_pool = SINGLE_IMAGE_COMMENT_FILES
+    else:
+        comment_pool = TEXT_COMMENT_FILES
 
     success       = False
     last_file     = None
@@ -467,7 +491,11 @@ def process_account(account, conversation_id):
         last_comment = comment
 
         media_ids = []
-        if comment_file in IMAGE_COMMENT_FILES:
+        needs_image = (
+            comment_file in IMAGE_COMMENT_FILES or
+            comment_file in SINGLE_IMAGE_COMMENT_FILES
+        )
+        if needs_image:
             media_ids = upload_images_for_comment(comment_file, account, user_agent, account_name)
             if not media_ids:
                 log(account_name, f"Attempt {attempt}: Image upload failed, retrying with different comment.")
@@ -509,7 +537,7 @@ def process_account(account, conversation_id):
                 log(account_name, f"Attempt {attempt}: {api_error_msg}, retrying.")
                 exclude_post = comment["id"]
         else:
-            log(account_name, f"Attempt {attempt}: HTTP {last_status} | {res.text[:200]}, retrying.")
+            log(account_name, f"Attempt {attempt}: HTTP {last_status}, retrying.")
             exclude_post = comment["id"]
 
     if not success and last_file and last_comment:
