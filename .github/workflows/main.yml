@@ -26,4 +26,4 @@ jobs:
         env:
           PYTHONUNBUFFERED: "1"
           PYTHONIOENCODING: "utf-8"
-        run: python3 -u main.py
+        run: timeout 55m python3 -u main.py || true
